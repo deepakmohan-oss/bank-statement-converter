@@ -1,1 +1,3 @@
-# OrtusPro AU Bank Statement Converter\n\nPhase 4: Commonwealth parser scaffold and upload workflow foundation.
+# OrtusPro AU Bank Converter
+
+Phase 5: Working PDF upload endpoint, PDF extraction and bank detection.
