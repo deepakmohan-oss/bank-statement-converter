@@ -1,1 +1,0 @@
-rootProject.name="ortuspro-au-bank-converter"
