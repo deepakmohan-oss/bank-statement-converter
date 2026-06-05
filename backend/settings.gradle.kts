@@ -1,1 +1,1 @@
-rootProject.name="ortuspro-au-bank-converter"
+rootProject.name = "ortuspro-au-bank-converter"
