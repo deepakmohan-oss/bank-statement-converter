@@ -1,3 +1,3 @@
 # OrtusPro Australian Bank Statement Converter
 
-Project scaffold.
+Railway-ready Kotlin/Ktor foundation.
