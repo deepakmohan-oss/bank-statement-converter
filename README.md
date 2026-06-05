@@ -1,3 +1,1 @@
-# OrtusPro AU Bank Converter
-
-Phase 5: Working PDF upload endpoint, PDF extraction and bank detection.
+# Phase 6\nTransaction extraction scaffold and CSV export service.
