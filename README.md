@@ -1,3 +1,1 @@
-# OrtusPro Australian Bank Statement Converter
-
-Railway-ready Kotlin/Ktor foundation.
+# OrtusPro AU Bank Statement Converter\n\nPhase 1: Upload, Parse, Merge, Duplicate Detection, Export.
