@@ -1,1 +1,3 @@
-class UploadRoutes {}
+package com.ortuspro.api
+
+class UploadRoutes

@@ -1,1 +1,3 @@
-# OrtusPro AU Bank Statement Converter\n\nPhase 1: Upload, Parse, Merge, Duplicate Detection, Export.
+# OrtusPro AU Bank Statement Converter
+
+Phase 3: PDF extraction, bank detection, parser framework.
