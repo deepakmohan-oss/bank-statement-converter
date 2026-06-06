@@ -1,12 +1,12 @@
 # Railway nixpacks config for Kotlin/Ktor + React frontend
-# Installs JDK 21, Tesseract OCR, and Poppler for PDF rasterisation
 
 [phases.setup]
 nixPkgs = [
-  "jdk21",
+  "jdk17",
   "nodejs_20",
   "tesseract",
   "poppler_utils",
+  "gradle",
 ]
 
 [phases.install]
@@ -16,7 +16,7 @@ cmds = [
 ]
 
 [phases.build]
-cmds = ["cd backend && chmod +x gradlew && ./gradlew buildFatJar --no-daemon"]
+cmds = ["cd backend && gradle buildFatJar --no-daemon"]
 
 [start]
 cmd = "java -jar backend/build/libs/app.jar"
