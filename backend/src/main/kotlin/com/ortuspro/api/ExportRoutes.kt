@@ -6,12 +6,11 @@ import io.ktor.server.routing.*
 
 fun Route.exportRoutes() {
 
-    get("/api/export/status") {
-        call.respond(
-            mapOf(
-                "csv" to true,
-                "xlsx" to false
-            )
-        )
+    get("/api/export/csv") {
+        call.respond(mapOf("status" to "csv export ready"))
+    }
+
+    get("/api/export/xlsx") {
+        call.respond(mapOf("status" to "xlsx export ready"))
     }
 }
