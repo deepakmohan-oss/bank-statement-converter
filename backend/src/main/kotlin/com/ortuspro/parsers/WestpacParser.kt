@@ -283,7 +283,6 @@ class WestpacParser : StatementParser {
         }
         commit()
 
-        }
 
         return Statement(
             bank             = bankName,
