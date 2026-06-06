@@ -21,7 +21,7 @@ import java.time.LocalDate
  * Format C: "Transactions report" (Business One)
  *   - Date: DD MMM YYYY, columns: Date | Description | Withdrawal | Deposit | Balance
  *   - Amounts have leading "-" for withdrawals, "+" for deposits
- *   - Description split across 2–3 lines
+ *   - Description split across 2-3 lines
  */
 class WestpacParser : StatementParser {
     override val bankName = "WESTPAC"
@@ -72,8 +72,6 @@ class WestpacParser : StatementParser {
 
     override fun parse(text: String): Statement {
         val meta = extractMeta(text)
-
-        // Detect which sub-format
         return when {
             text.contains("Statement of recent transactions", ignoreCase = true) ->
                 parseNoBalanceFormat(text, meta)
@@ -140,7 +138,6 @@ class WestpacParser : StatementParser {
     }
 
     // ── Format B: "Statement of recent transactions" — no running balance ──────
-    // Transactions in REVERSE order. Balance reconstructed from current balance.
     private fun parseNoBalanceFormat(text: String, meta: Map<String, String>): Statement {
         val lines = text.lines()
         val dateRe = Regex("""^(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})\s+(.*)$""", RegexOption.IGNORE_CASE)
@@ -173,10 +170,7 @@ class WestpacParser : StatementParser {
                 val rest = m.groupValues[2]
                 val amounts = amtRe.findAll(rest).map { amtClean.replace(it.value, "").toDouble() }.toList()
                 currentDesc = amtRe.replace(rest, "").trim()
-                // Assign: negative = withdrawal, positive = deposit
-                for (a in amounts) {
-                    if (a < 0) currentWd = -a else currentDep = a
-                }
+                for (a in amounts) { if (a < 0) currentWd = -a else currentDep = a }
             } else if (currentDate != null) {
                 val amounts = amtRe.findAll(s).map { amtClean.replace(it.value, "").toDouble() }.toList()
                 if (amounts.isNotEmpty()) {
@@ -188,14 +182,9 @@ class WestpacParser : StatementParser {
         }
         commitRaw()
 
-        // Transactions came out in reverse — sort ascending by date
         rawTxns.sortBy { it.date }
 
-        // Reconstruct running balance: currentBalance is END balance
-        val endBalance = meta["closingBalance"]?.toDoubleOrNull()
-            ?: rawTxns.size.let { 0.0 } // fallback
-
-        // Walk backwards to compute opening balance
+        val endBalance = meta["closingBalance"]?.toDoubleOrNull() ?: 0.0
         var runBal = endBalance
         val reversed = rawTxns.reversed()
         val balances = mutableListOf<Double>()
@@ -228,27 +217,26 @@ class WestpacParser : StatementParser {
     // ── Format C: "Transactions report" — has balance column, signed amounts ───
     private fun parseTransactionsReport(text: String, meta: Map<String, String>): Statement {
         val lines = text.lines()
-        val dateRe = Regex("""^(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})\s+(.*)$""", RegexOption.IGNORE_CASE)
-        val amtRe  = Regex("""-?\$[\d,]+\.\d{2}|\+\$[\d,]+\.\d{2}""")
+        val dateRe   = Regex("""^(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})\s+(.*)$""", RegexOption.IGNORE_CASE)
+        val amtRe    = Regex("""-?\$[\d,]+\.\d{2}|\+\$[\d,]+\.\d{2}""")
         val amtClean = Regex("""[\$,+]""")
 
         val txns = mutableListOf<Transaction>()
         var currentDate: LocalDate? = null
         var currentDesc = ""
-        var currentWd: Double? = null
+        var currentWd:  Double? = null
         var currentDep: Double? = null
         var currentBal: Double? = null
 
         fun assignAmounts(amounts: List<Double>) {
-            // Last amount is always balance (positive), first is wd (negative) or dep (positive)
             if (amounts.isEmpty()) return
             currentBal = Math.abs(amounts.last())
             if (amounts.size >= 2) {
                 val first = amounts[0]
                 if (first < 0) currentWd = -first else currentDep = first
             }
-
         }
+
         fun commit() {
             if (currentDate == null || currentBal == null) return
             txns.add(Transaction(
@@ -283,7 +271,6 @@ class WestpacParser : StatementParser {
         }
         commit()
 
-
         return Statement(
             bank             = bankName,
             accountNumber    = meta["accountNumber"] ?: "",
@@ -316,7 +303,6 @@ class WestpacParser : StatementParser {
             ?.groupValues?.get(1)?.replace(",", "")?.let { meta["openingBalance"] = it }
         Regex("""Closing Balance.*?\+([\d,]+\.\d{2})""", RegexOption.IGNORE_CASE).find(text)
             ?.groupValues?.get(1)?.replace(",", "")?.let { meta["closingBalance"] = it }
-        // "Statement of recent transactions" format — current balance at top
         Regex("""Current balance:\s*\$?([\d,]+\.\d{2})""", RegexOption.IGNORE_CASE).find(text)
             ?.groupValues?.get(1)?.replace(",", "")?.let { meta["closingBalance"] = it }
         Regex("""End Balance.*?\+([\d,]+\.\d{2})""", RegexOption.IGNORE_CASE).find(text)
