@@ -239,6 +239,16 @@ class WestpacParser : StatementParser {
         var currentDep: Double? = null
         var currentBal: Double? = null
 
+        fun assignAmounts(amounts: List<Double>) {
+            // Last amount is always balance (positive), first is wd (negative) or dep (positive)
+            if (amounts.isEmpty()) return
+            currentBal = Math.abs(amounts.last())
+            if (amounts.size >= 2) {
+                val first = amounts[0]
+                if (first < 0) currentWd = -first else currentDep = first
+            }
+
+        }
         fun commit() {
             if (currentDate == null || currentBal == null) return
             txns.add(Transaction(
@@ -273,14 +283,6 @@ class WestpacParser : StatementParser {
         }
         commit()
 
-        fun assignAmounts(amounts: List<Double>) {
-            // Last amount is always balance (positive), first is wd (negative) or dep (positive)
-            if (amounts.isEmpty()) return
-            currentBal = Math.abs(amounts.last())
-            if (amounts.size >= 2) {
-                val first = amounts[0]
-                if (first < 0) currentWd = -first else currentDep = first
-            }
         }
 
         return Statement(
