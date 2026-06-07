@@ -80,7 +80,7 @@ class CommonwealthParser : StatementParser {
     )
 
     override val extraStop = Regex(
-        """^closing balance\s*\$|your credit interest rate""",
+        """^closing balance\s*[$]|your credit interest rate""",
         RegexOption.IGNORE_CASE
     )
 
@@ -156,9 +156,16 @@ class CommonwealthParser : StatementParser {
         }
         commit()
 
-        return Statement(bankName, meta["accountNumber"] ?: "", meta["accountName"] ?: "",
-            meta["openingBalance"]?.toDoubleOrNull(), meta["closingBalance"]?.toDoubleOrNull(),
-            meta["from"] ?: "", meta["to"] ?: "", txns.filter { it.balance != null })
+        return Statement(
+            bank             = bankName,
+            accountNumber    = meta["accountNumber"] ?: "",
+            accountName      = meta["accountName"] ?: "",
+            openingBalance   = meta["openingBalance"]?.toDoubleOrNull(),
+            closingBalance   = meta["closingBalance"]?.toDoubleOrNull(),
+            statementFrom    = meta["from"] ?: "",
+            statementTo      = meta["to"] ?: "",
+            transactions     = txns.filter { it.balance != null }
+        )
     }
 
     // ── Format B: Transaction Summary (single Amount column) ──────────────────
@@ -243,9 +250,16 @@ class CommonwealthParser : StatementParser {
         }
         commit()
 
-        return Statement(bankName, meta["accountNumber"] ?: "", meta["accountName"] ?: "",
-            meta["openingBalance"]?.toDoubleOrNull(), meta["closingBalance"]?.toDoubleOrNull(),
-            meta["from"] ?: "", meta["to"] ?: "", txns.filter { it.balance != null })
+        return Statement(
+            bank             = bankName,
+            accountNumber    = meta["accountNumber"] ?: "",
+            accountName      = meta["accountName"] ?: "",
+            openingBalance   = meta["openingBalance"]?.toDoubleOrNull(),
+            closingBalance   = meta["closingBalance"]?.toDoubleOrNull(),
+            statementFrom    = meta["from"] ?: "",
+            statementTo      = meta["to"] ?: "",
+            transactions     = txns.filter { it.balance != null }
+        )
     }
 
     override fun extractMeta(text: String): Map<String, String> {
