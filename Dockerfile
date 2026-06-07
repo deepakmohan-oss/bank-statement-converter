@@ -46,7 +46,7 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 WORKDIR /app
-COPY --from=backend-build /app/build/libs/*-all.jar app.jar
+COPY --from=backend-build /app/build/libs/app.jar app.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-Xmx512m", "-XX:+UseContainerSupport", "-jar", "app.jar"]
