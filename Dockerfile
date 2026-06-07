@@ -17,22 +17,20 @@ FROM gradle:8-jdk21 AS backend-build
 
 WORKDIR /app
 
-# Copy Gradle wrapper + build files first (better layer caching)
 COPY backend/gradle/             gradle/
 COPY backend/gradlew             gradlew
 COPY backend/build.gradle.kts    build.gradle.kts
 COPY backend/settings.gradle.kts settings.gradle.kts
 
-# Pre-download dependencies (this layer is cached unless build files change)
+# Fix execute permission (lost when extracted from zip)
+RUN chmod +x gradlew
+
+# Pre-download dependencies (cached unless build files change)
 RUN ./gradlew dependencies --no-daemon --quiet 2>/dev/null || true
 
-# Copy Kotlin source
 COPY backend/src/ src/
-
-# Copy Vite build output into Ktor static resources
 COPY --from=frontend-build /frontend/dist/ src/main/resources/static/
 
-# Build fat JAR
 RUN ./gradlew buildFatJar --no-daemon
 
 
@@ -41,7 +39,6 @@ RUN ./gradlew buildFatJar --no-daemon
 # ─────────────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine
 
-# Install OCR (Tesseract) and PDF rasterisation (Poppler)
 RUN apk add --no-cache \
     tesseract-ocr \
     tesseract-ocr-data-eng \
