@@ -4,12 +4,10 @@
 FROM node:20-alpine AS frontend-build
 
 WORKDIR /frontend
-COPY frontend/package*.json ./
-RUN npm ci --silent
-
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
 COPY frontend/ ./
 RUN npm run build
-# Output goes to frontend/dist (vite default)
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -19,19 +17,19 @@ FROM gradle:8-jdk21 AS backend-build
 
 WORKDIR /app
 
-# Copy Gradle wrapper and build files first (layer cache)
-COPY backend/gradle/      gradle/
-COPY backend/gradlew      gradlew
+# Copy Gradle wrapper + build files first (better layer caching)
+COPY backend/gradle/             gradle/
+COPY backend/gradlew             gradlew
 COPY backend/build.gradle.kts    build.gradle.kts
 COPY backend/settings.gradle.kts settings.gradle.kts
 
-# Download dependencies only (cache this layer)
-RUN ./gradlew dependencies --no-daemon 2>/dev/null || true
+# Pre-download dependencies (this layer is cached unless build files change)
+RUN ./gradlew dependencies --no-daemon --quiet 2>/dev/null || true
 
-# Copy source + frontend static files
+# Copy Kotlin source
 COPY backend/src/ src/
 
-# Copy frontend build output into Ktor resources
+# Copy Vite build output into Ktor static resources
 COPY --from=frontend-build /frontend/dist/ src/main/resources/static/
 
 # Build fat JAR
@@ -43,7 +41,7 @@ RUN ./gradlew buildFatJar --no-daemon
 # ─────────────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine
 
-# Install OCR dependencies (Tesseract + Poppler for PDF rasterisation)
+# Install OCR (Tesseract) and PDF rasterisation (Poppler)
 RUN apk add --no-cache \
     tesseract-ocr \
     tesseract-ocr-data-eng \
@@ -53,9 +51,5 @@ RUN apk add --no-cache \
 WORKDIR /app
 COPY --from=backend-build /app/build/libs/*-all.jar app.jar
 
-# Railway sets PORT automatically
 EXPOSE 8080
-ENTRYPOINT ["java", \
-  "-Xmx512m", \
-  "-XX:+UseContainerSupport", \
-  "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xmx512m", "-XX:+UseContainerSupport", "-jar", "app.jar"]
