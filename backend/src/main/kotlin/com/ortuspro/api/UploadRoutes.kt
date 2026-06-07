@@ -25,7 +25,7 @@ fun Route.uploadRoutes() {
 
     post("/api/upload") {
         // ── Rate limiting ──────────────────────────────────────────────────
-        val ip = call.request.origin.remoteAddress
+        val ip = call.request.local.remoteAddress
         if (!limiter.allow(ip)) {
             call.respond(
                 HttpStatusCode.TooManyRequests,
