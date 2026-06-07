@@ -1,110 +1,126 @@
 import { useState, useCallback } from "react"
 
-export default function UploadPage({ onStatementParsed }) {
-  const [dragging, setDragging] = useState(false)
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState("")
-  const [warnings, setWarnings] = useState([])
+const BANKS = ["Commonwealth","NAB","Westpac","ANZ","Macquarie","BOQ",
+               "Auswide","Bankwest","Bendigo","ING","St George"]
+
+export default function UploadPage({ onDone }) {
+  const [drag, setDrag]       = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState("")
+  const [warns, setWarns]     = useState([])
 
   const upload = useCallback(async (file) => {
-    if (!file || !file.name.endsWith(".pdf")) {
-      setError("Please upload a PDF file.")
-      return
+    if (!file) return
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      setError("Please upload a PDF file."); return
     }
-    setLoading(true)
-    setError("")
-    setWarnings([])
-
+    if (file.size > 20 * 1024 * 1024) {
+      setError("File too large — maximum 20 MB."); return
+    }
+    setLoading(true); setError(""); setWarns([])
     const form = new FormData()
     form.append("file", file)
-
     try {
-      const res  = await fetch("/api/upload", { method: "POST", body: form })
+      const res  = await fetch("/api/upload", { method:"POST", body:form })
       const data = await res.json()
+      if (!data.success) { setError(data.errors?.[0] || "Upload failed.") }
+      else { if (data.warnings?.length) setWarns(data.warnings); onDone(data.statement) }
+    } catch { setError("Network error — please try again.") }
+    finally { setLoading(false) }
+  }, [onDone])
 
-      if (!data.success) {
-        setError(data.errors?.[0] || "Upload failed.")
-      } else {
-        if (data.warnings?.length) setWarnings(data.warnings)
-        onStatementParsed?.(data)
-      }
-    } catch (e) {
-      setError("Server error. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }, [onStatementParsed])
-
-  const onDrop = useCallback((e) => {
-    e.preventDefault()
-    setDragging(false)
+  const onDrop = useCallback(e => {
+    e.preventDefault(); setDrag(false)
     upload(e.dataTransfer.files[0])
   }, [upload])
 
   return (
-    <div style={{ maxWidth: 560, margin: "60px auto", fontFamily: "system-ui, sans-serif" }}>
-      <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>
-        AU Bank Statement Converter
-      </h1>
-      <p style={{ color: "#555", marginBottom: 32 }}>
-        Supports Commonwealth, NAB, Westpac, ANZ, Macquarie, BOQ, Bankwest, Bendigo, ING, St George
-      </p>
+    <div style={{ maxWidth:580, margin:"0 auto" }}>
+      {/* Hero */}
+      <div style={{ textAlign:"center", marginBottom:36 }}>
+        <h1 style={{ fontSize:28, fontWeight:800, color:"#0a1628", margin:"0 0 8px" }}>
+          Convert Bank Statements
+        </h1>
+        <p style={{ color:"#64748b", fontSize:15, margin:0 }}>
+          Upload any Australian bank statement PDF and export to Excel or CSV instantly.
+        </p>
+      </div>
 
       {/* Drop zone */}
       <div
         onDrop={onDrop}
-        onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-        onDragLeave={() => setDragging(false)}
-        onClick={() => document.getElementById("file-input").click()}
+        onDragOver={e => { e.preventDefault(); setDrag(true) }}
+        onDragLeave={() => setDrag(false)}
+        onClick={() => !loading && document.getElementById("fi").click()}
         style={{
-          border: `2px dashed ${dragging ? "#2563eb" : "#cbd5e1"}`,
-          borderRadius: 12,
-          padding: "48px 32px",
-          textAlign: "center",
-          cursor: "pointer",
-          background: dragging ? "#eff6ff" : "#f8fafc",
-          transition: "all 0.2s"
+          border:`2px dashed ${drag ? "#1d6fb8" : "#cbd5e1"}`,
+          borderRadius:16, padding:"52px 32px", textAlign:"center",
+          cursor: loading ? "wait" : "pointer",
+          background: drag ? "#eff6ff" : "#fff",
+          transition:"all 0.2s",
+          boxShadow:"0 1px 3px rgba(0,0,0,.06)"
         }}
       >
-        <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
-        <div style={{ fontWeight: 600, marginBottom: 4 }}>
-          {loading ? "Parsing..." : "Drop your bank statement PDF here"}
+        <div style={{ fontSize:48, marginBottom:14 }}>
+          {loading ? "⏳" : "📄"}
         </div>
-        <div style={{ color: "#64748b", fontSize: 14 }}>or click to browse</div>
-        <input
-          id="file-input"
-          type="file"
-          accept=".pdf"
-          style={{ display: "none" }}
-          onChange={(e) => upload(e.target.files[0])}
-        />
+        <div style={{ fontWeight:700, fontSize:16, color:"#0a1628", marginBottom:6 }}>
+          {loading ? "Parsing statement…" : "Drop your PDF here"}
+        </div>
+        <div style={{ color:"#64748b", fontSize:14, marginBottom:20 }}>
+          {loading ? "Detecting bank and extracting transactions" : "or click to browse (max 20 MB)"}
+        </div>
+        {!loading && (
+          <div style={{
+            display:"inline-block", background:"#1d6fb8", color:"#fff",
+            padding:"9px 22px", borderRadius:8, fontWeight:600, fontSize:14
+          }}>
+            Choose File
+          </div>
+        )}
+        {loading && (
+          <div style={{
+            width:200, height:4, background:"#e2e8f0", borderRadius:4, margin:"0 auto"
+          }}>
+            <div style={{
+              width:"60%", height:"100%", background:"#1d6fb8",
+              borderRadius:4, animation:"pulse 1.5s ease-in-out infinite"
+            }} />
+          </div>
+        )}
+        <input id="fi" type="file" accept=".pdf" style={{ display:"none" }}
+          onChange={e => upload(e.target.files[0])} />
       </div>
 
-      {loading && (
-        <div style={{ marginTop: 20, color: "#2563eb", textAlign: "center" }}>
-          ⏳ Detecting bank and extracting transactions…
-        </div>
-      )}
+      {/* Supported banks */}
+      <div style={{ marginTop:20, textAlign:"center" }}>
+        <span style={{ color:"#94a3b8", fontSize:12 }}>Supports: </span>
+        <span style={{ color:"#64748b", fontSize:12 }}>{BANKS.join(" · ")}</span>
+      </div>
 
+      {/* Error */}
       {error && (
         <div style={{
-          marginTop: 20, padding: "14px 18px",
-          background: "#fef2f2", border: "1px solid #fca5a5",
-          borderRadius: 8, color: "#b91c1c", fontSize: 14
+          marginTop:20, padding:"14px 18px",
+          background:"#fef2f2", border:"1px solid #fca5a5",
+          borderRadius:10, color:"#b91c1c", fontSize:14, lineHeight:1.5
         }}>
-          ⚠ {error}
+          <strong>⚠ Error:</strong> {error}
         </div>
       )}
 
-      {warnings.map((w, i) => (
+      {/* Warnings */}
+      {warns.map((w, i) => (
         <div key={i} style={{
-          marginTop: 12, padding: "12px 16px",
-          background: "#fffbeb", border: "1px solid #fcd34d",
-          borderRadius: 8, color: "#92400e", fontSize: 14
+          marginTop:12, padding:"12px 16px",
+          background:"#fffbeb", border:"1px solid #fcd34d",
+          borderRadius:10, color:"#92400e", fontSize:13
         }}>
           ⚡ {w}
         </div>
       ))}
+
+      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
     </div>
   )
 }

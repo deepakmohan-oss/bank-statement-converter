@@ -12,7 +12,15 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: '../backend/src/main/resources/static',
-    emptyOutDir: true
+    outDir: 'dist',        // standard vite output — Dockerfile copies this in
+    emptyOutDir: true,
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom']
+        }
+      }
+    }
   }
 })

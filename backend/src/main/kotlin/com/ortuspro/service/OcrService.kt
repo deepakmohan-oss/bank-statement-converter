@@ -2,6 +2,7 @@ package com.ortuspro.service
 
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.nio.file.Files
 
 /**
  * OcrService — OCR pipeline for scanned/photographed bank statement PDFs.
@@ -77,7 +78,7 @@ class OcrService {
      * Uses pdftoppm (poppler) to rasterise, then Tesseract to extract text.
      */
     fun ocrPdf(file: File): String {
-        val tmpDir = createTempDir("nab_ocr_")
+        val tmpDir = Files.createTempDirectory("nab_ocr_").toFile()
         try {
             // Step 1: Rasterise PDF to PNG images using pdftoppm (poppler)
             val rasterCmd = arrayOf(
@@ -135,10 +136,4 @@ class OcrService {
         }
     }
 
-    @Suppress("DEPRECATION")
-    private fun createTempDir(prefix: String): File {
-        val dir = File(System.getProperty("java.io.tmpdir"), prefix + System.currentTimeMillis())
-        dir.mkdirs()
-        return dir
-    }
 }

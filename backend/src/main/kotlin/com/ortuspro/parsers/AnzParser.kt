@@ -5,8 +5,6 @@ import com.ortuspro.model.Transaction
 import com.ortuspro.parser.StatementParser
 import com.ortuspro.util.DateParser
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * ANZ parser — handles ANZ Business Essentials statement format.

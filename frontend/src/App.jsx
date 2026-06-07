@@ -10,57 +10,56 @@ export default function App() {
   const [step, setStep]           = useState(0)
   const [statement, setStatement] = useState(null)
 
-  const handleUploaded = (data) => {
-    setStatement(data.statement)
-    setStep(1)
-  }
+  const go = (n) => setStep(n)
 
-  const handleReviewNext = () => setStep(2)
-
-  const handleDuplicatesConfirm = (cleaned) => {
-    setStatement(cleaned)
-    setStep(3)
-  }
-
-  const startOver = () => {
-    setStatement(null)
-    setStep(0)
-  }
+  const reset = () => { setStatement(null); setStep(0) }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
-      {/* Step indicator */}
-      <div style={{
-        background: "#1e3a5f", padding: "12px 24px",
-        display: "flex", gap: 0, alignItems: "center"
+    <div style={{ minHeight:"100vh", background:"#f0f4f8", fontFamily:"'Inter',system-ui,sans-serif" }}>
+
+      {/* Nav */}
+      <header style={{
+        background:"#0a1628", borderBottom:"1px solid #1e3a5f",
+        padding:"0 24px", display:"flex", alignItems:"center", height:56
       }}>
-        <span style={{ color: "#93c5fd", fontWeight: 700, fontSize: 15, marginRight: 32 }}>
+        <span style={{ color:"#4fa3e0", fontWeight:800, fontSize:18, letterSpacing:"-0.5px", marginRight:40 }}>
           OrtúsPro
         </span>
-        {STEPS.map((s, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center" }}>
-            <div style={{
-              padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600,
-              background: i === step ? "#2563eb" : "transparent",
-              color: i === step ? "#fff" : i < step ? "#93c5fd" : "#475569",
-              cursor: i < step ? "pointer" : "default"
-            }} onClick={() => i < step && setStep(i)}>
-              {i < step ? "✓ " : ""}{s}
-            </div>
-            {i < STEPS.length - 1 && (
-              <span style={{ color: "#334155", margin: "0 4px" }}>›</span>
-            )}
-          </div>
-        ))}
-      </div>
+        <span style={{ color:"#64748b", fontSize:13 }}>AU Bank Statement Converter</span>
 
-      {/* Page content */}
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        {step === 0 && <UploadPage     onStatementParsed={handleUploaded} />}
-        {step === 1 && <ReviewPage     statement={statement} onNext={handleReviewNext} />}
-        {step === 2 && <DuplicatesPage statement={statement} onConfirm={handleDuplicatesConfirm} />}
-        {step === 3 && <ExportPage     statement={statement} onStartOver={startOver} />}
-      </div>
+        {/* Step indicator */}
+        <div style={{ display:"flex", alignItems:"center", gap:0, marginLeft:"auto" }}>
+          {STEPS.map((s, i) => (
+            <div key={i} style={{ display:"flex", alignItems:"center" }}>
+              <button
+                onClick={() => i < step && setStep(i)}
+                style={{
+                  padding:"5px 14px", borderRadius:20, fontSize:12, fontWeight:600,
+                  background: i === step ? "#1d6fb8" : "transparent",
+                  color: i === step ? "#fff" : i < step ? "#4fa3e0" : "#3d5166",
+                  border:"none", cursor: i < step ? "pointer" : "default",
+                  transition:"all 0.15s"
+                }}
+              >
+                {i < step ? `✓ ${s}` : s}
+              </button>
+              {i < STEPS.length - 1 && (
+                <span style={{ color:"#1e3a5f", margin:"0 2px", fontSize:16 }}>›</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </header>
+
+      {/* Content */}
+      <main style={{ maxWidth:960, margin:"0 auto", padding:"32px 24px" }}>
+        {step === 0 && <UploadPage onDone={s => { setStatement(s); go(1) }} />}
+        {step === 1 && <ReviewPage statement={statement} onNext={() => go(2)} onBack={() => go(0)} />}
+        {step === 2 && <DuplicatesPage statement={statement}
+                          onConfirm={s => { setStatement(s); go(3) }}
+                          onBack={() => go(1)} />}
+        {step === 3 && <ExportPage statement={statement} onReset={reset} onBack={() => go(2)} />}
+      </main>
     </div>
   )
 }

@@ -61,7 +61,7 @@ class ReconciliationService {
             if (i == 0) continue
             val expectedBal = prevBal - (tx.debit ?: 0.0) + (tx.credit ?: 0.0)
             val actualBal   = tx.balance ?: 0.0
-            if (Math.abs(expectedBal - actualBal) > TOLERANCE) {
+            if (kotlin.math.abs(expectedBal - actualBal) > TOLERANCE) {
                 warnings.add("Balance discontinuity at ${tx.date}: expected ${f(expectedBal)} got ${f(actualBal)}")
                 runningBalanceOk = false
             }
@@ -74,13 +74,13 @@ class ReconciliationService {
         } else null
 
         val discrepancy = if (computedClosing != null && statement.closingBalance != null) {
-            Math.abs(computedClosing - statement.closingBalance)
+            kotlin.math.abs(computedClosing - statement.closingBalance)
         } else null
 
         val closingMatch = discrepancy == null || discrepancy <= TOLERANCE
         // Also check last parsed balance vs stated closing
         val lastBalMatch = statement.closingBalance == null ||
-            Math.abs(lastBal - statement.closingBalance) <= TOLERANCE
+            kotlin.math.abs(lastBal - statement.closingBalance) <= TOLERANCE
 
         if (!lastBalMatch && statement.closingBalance != null) {
             warnings.add("Last transaction balance ${f(lastBal)} ≠ stated closing ${f(statement.closingBalance)}")

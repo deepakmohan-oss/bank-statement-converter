@@ -12,9 +12,11 @@ import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
+import java.io.File
 
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
@@ -23,9 +25,9 @@ fun main() {
 
         install(ContentNegotiation) {
             json(Json {
-                prettyPrint        = false
-                isLenient          = true
-                ignoreUnknownKeys  = true
+                prettyPrint       = false
+                isLenient         = true
+                ignoreUnknownKeys = true
             })
         }
 
@@ -37,9 +39,18 @@ fun main() {
             allowHeader(HttpHeaders.Authorization)
         }
 
+        install(StatusPages) {
+            exception<Throwable> { call, cause ->
+                call.respondText(
+                    """{"success":false,"errors":["Server error: ${cause.message}"]}""",
+                    ContentType.Application.Json,
+                    HttpStatusCode.InternalServerError
+                )
+            }
+        }
+
         routing {
 
-            // ── API ────────────────────────────────────────────────────────
             get("/health") {
                 val (ocrOk, ocrMsg) = OcrService.isAvailable()
                 call.respond(mapOf(
@@ -59,20 +70,10 @@ fun main() {
             exportRoutes()
             mergeRoutes()
 
-            // ── Static frontend (built by Vite into resources/static) ──────
-            staticResources("/", "static") {
-                default("index.html")
-            }
-
-            // SPA fallback — any unmatched route serves index.html
-            get("{...}") {
-                call.respondText(
-                    this::class.java.classLoader
-                        .getResourceAsStream("static/index.html")
-                        ?.bufferedReader()?.readText()
-                        ?: "App not found",
-                    ContentType.Text.Html
-                )
+            // Serve React build (Vite output into resources/static)
+            static("/") {
+                resources("static")
+                defaultResource("index.html", "static")
             }
         }
 
