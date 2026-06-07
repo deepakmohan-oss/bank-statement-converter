@@ -62,6 +62,10 @@ class NabParser : StatementParser {
             """number on the top of this statement""",
             """^\.{3,}""",
             """abn \d{2} \d{3} \d{3} \d{3}""",
+            """may include transactions which may appear""",
+            """inclusion of a debit does not always""",
+            """^transactions,\s+all""",
+            """\$ \$ is \d+%""",
             """^brought forward\s*$""",
             """^carried forward\s*$""",
             """statement starts""",
@@ -82,7 +86,7 @@ class NabParser : StatementParser {
     )
 
     override val extraStop = Regex(
-        """^carrying forward|total debits & credits""",
+        """^carrying forward|total debits & credits|^closing balance\s*$""",
         RegexOption.IGNORE_CASE
     )
 
